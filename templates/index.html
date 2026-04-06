@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PromptLens</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#faf7ff;
+  --surface:#fff;
+  --border:#e8e0ff;
+  --text1:#1a0a3d;
+  --text2:#6b5c8a;
+  --text3:#a89cc0;
+  --p1:#7c3aed;--p2:#a855f7;--p3:#c084fc;--p4:#e9d5ff;
+  --c1:#0ea5e9;--c2:#38bdf8;--c3:#7dd3fc;--c4:#e0f2fe;
+  --g1:#10b981;--g2:#34d399;--g3:#6ee7b7;--g4:#d1fae5;
+  --o1:#f59e0b;--o2:#fbbf24;--o3:#fcd34d;--o4:#fef3c7;
+  --r1:#ef4444;--r2:#f87171;--r3:#fca5a5;--r4:#fee2e2;
+  --pk1:#ec4899;--pk2:#f472b6;--pk3:#f9a8d4;--pk4:#fce7f3;
+}
+
+html{scroll-behavior:smooth}
+body{background:var(--bg);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden;position:relative}
+
+/* Animated gradient background */
+.bg-anim{
+  position:fixed;inset:0;z-index:0;
+  background:linear-gradient(135deg,#faf7ff 0%,#f0e9ff 30%,#e0f2fe 60%,#fef3c7 100%);
+  animation:bgShift 8s ease-in-out infinite;
+}
+@keyframes bgShift{
+  0%,100%{background:linear-gradient(135deg,#faf7ff 0%,#f0e9ff 30%,#e0f2fe 60%,#fef3c7 100%)}
+  33%{background:linear-gradient(135deg,#fce7f3 0%,#e9d5ff 30%,#d1fae5 60%,#e0f2fe 100%)}
+  66%{background:linear-gradient(135deg,#e0f2fe 0%,#fce7f3 30%,#fef3c7 60%,#f0e9ff 100%)}
+}
+
+/* Floating blobs */
+.blob{
+  position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;opacity:0.5;
+}
+.blob1{width:600px;height:600px;top:-200px;left:-100px;background:radial-gradient(circle,#c084fc,#7dd3fc);animation:blobFloat 12s ease-in-out infinite}
+.blob2{width:500px;height:500px;bottom:-150px;right:-100px;background:radial-gradient(circle,#f9a8d4,#6ee7b7);animation:blobFloat 15s ease-in-out infinite reverse}
+.blob3{width:300px;height:300px;top:50%;left:60%;background:radial-gradient(circle,#fcd34d,#f87171);animation:blobFloat 10s ease-in-out infinite 3s}
+@keyframes blobFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-40px) scale(1.05)}}
+
+/* Floating particles */
+.particles{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.particle{
+  position:absolute;border-radius:50%;
+  animation:particleFloat linear infinite;
+}
+@keyframes particleFloat{
+  0%{transform:translateY(100vh) scale(0);opacity:0}
+  10%{opacity:0.7}
+  90%{opacity:0.4}
+  100%{transform:translateY(-100px) scale(1);opacity:0}
+}
+
+.wrapper{max-width:1100px;margin:0 auto;padding:60px 28px 120px;position:relative;z-index:1}
+
+/* Header */
+header{text-align:center;margin-bottom:56px;animation:fadeDown 0.9s cubic-bezier(.23,1,.32,1) both}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-24px)}to{opacity:1;transform:translateY(0)}}
+
+.badge-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px}
+.badge{
+  font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:2px;
+  padding:6px 18px;border-radius:100px;text-transform:uppercase;
+  background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;
+  box-shadow:0 4px 20px rgba(124,58,237,0.3);
+  animation:badgePulse 2.5s ease-in-out infinite;
+}
+@keyframes badgePulse{0%,100%{box-shadow:0 4px 20px rgba(124,58,237,0.3)}50%{box-shadow:0 4px 30px rgba(124,58,237,0.55)}}
+
+.live-dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 12px #10b981;animation:livePulse 1.8s ease-in-out infinite}
+@keyframes livePulse{0%,100%{box-shadow:0 0 8px #10b981,0 0 0 0 rgba(16,185,129,0.4)}50%{box-shadow:0 0 16px #10b981,0 0 0 6px rgba(16,185,129,0)}}
+
+h1{
+  font-family:'Outfit',sans-serif;font-weight:900;
+  font-size:clamp(44px,9vw,80px);line-height:1.05;letter-spacing:-3px;
+  background:linear-gradient(135deg,#7c3aed 0%,#ec4899 40%,#f59e0b 80%,#10b981 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  background-size:200% 200%;
+  animation:gradText 4s ease-in-out infinite;
+}
+@keyframes gradText{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+
+.tagline{font-size:16px;color:var(--text2);margin-top:10px;font-weight:300;letter-spacing:0.5px}
+
+/* Input card */
+.input-card{
+  background:rgba(255,255,255,0.85);
+  backdrop-filter:blur(20px);
+  border:1.5px solid rgba(124,58,237,0.2);
+  border-radius:20px;
+  overflow:hidden;
+  margin-bottom:28px;
+  box-shadow:0 8px 40px rgba(124,58,237,0.1);
+  animation:fadeUp 0.8s 0.2s cubic-bezier(.23,1,.32,1) both;
+  transition:all 0.3s ease;
+}
+.input-card:focus-within{
+  border-color:rgba(124,58,237,0.5);
+  box-shadow:0 0 0 4px rgba(124,58,237,0.1),0 20px 60px rgba(124,58,237,0.2);
+  transform:translateY(-2px);
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+.card-header{
+  display:flex;align-items:center;gap:7px;padding:14px 20px;
+  background:linear-gradient(90deg,rgba(124,58,237,0.06),rgba(236,72,153,0.04));
+  border-bottom:1px solid rgba(124,58,237,0.1);
+}
+.dot-r{width:11px;height:11px;border-radius:50%;background:#ff5f57;box-shadow:0 0 8px #ff5f5780}
+.dot-y{width:11px;height:11px;border-radius:50%;background:#febc2e;box-shadow:0 0 8px #febc2e80}
+.dot-g{width:11px;height:11px;border-radius:50%;background:#28c840;box-shadow:0 0 8px #28c84080}
+.card-label{font-family:'Space Mono',monospace;font-size:10px;color:var(--text3);margin-left:8px;letter-spacing:1.5px;text-transform:uppercase}
+
+textarea{
+  width:100%;background:transparent;border:none;outline:none;
+  color:var(--text1);font-family:'Space Mono',monospace;font-size:14px;line-height:1.8;
+  padding:22px 22px 14px;resize:none;min-height:150px;
+  caret-color:var(--p1);
+}
+textarea::placeholder{color:var(--text3)}
+
+.card-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;
+  background:linear-gradient(90deg,rgba(124,58,237,0.04),rgba(236,72,153,0.04));
+  border-top:1px solid rgba(124,58,237,0.08);
+  flex-wrap:wrap;gap:12px;
+}
+.examples-row{display:flex;gap:7px;flex-wrap:wrap;flex:1;min-width:200px}
+.ex-pill{
+  font-family:'Space Mono',monospace;font-size:10px;
+  padding:5px 12px;border-radius:100px;cursor:pointer;
+  border:1px solid;transition:all 0.25s ease;
+  white-space:nowrap;
+}
+.ex-pill:nth-child(1){color:var(--p1);border-color:rgba(124,58,237,0.3);background:rgba(124,58,237,0.06)}
+.ex-pill:nth-child(2){color:var(--c1);border-color:rgba(14,165,233,0.3);background:rgba(14,165,233,0.06)}
+.ex-pill:nth-child(3){color:var(--g1);border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.06)}
+.ex-pill:nth-child(4){color:var(--pk1);border-color:rgba(236,72,153,0.3);background:rgba(236,72,153,0.06)}
+.ex-pill:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.1)}
+
+.right-controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.char-count{font-family:'Space Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:0.5px}
+
+.analyze-btn{
+  padding:11px 28px;border-radius:100px;border:none;cursor:pointer;
+  font-family:'Outfit',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.3px;
+  color:#fff;text-transform:uppercase;
+  background:linear-gradient(135deg,#7c3aed,#ec4899);
+  box-shadow:0 8px 24px rgba(124,58,237,0.3);
+  transition:all 0.3s cubic-bezier(.4,0,.2,1);
+  display:flex;align-items:center;gap:9px;
+  position:relative;overflow:hidden;white-space:nowrap;
+}
+.analyze-btn::before{
+  content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);
+  transition:left 0.4s ease;
+}
+.analyze-btn:hover::before{left:100%}
+.analyze-btn:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(124,58,237,0.45)}
+.analyze-btn:active{transform:translateY(0)}
+.analyze-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Error */
+.error-box{
+  background:rgba(254,226,226,0.9);border:1px solid rgba(239,68,68,0.3);
+  border-radius:12px;padding:14px 18px;color:#b91c1c;
+  font-size:13px;display:none;margin-bottom:20px;
+  font-family:'Space Mono',monospace;backdrop-filter:blur(10px);
+}
+
+/* Results */
+#results{display:none;animation:fadeIn 0.6s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* Score hero */
+.score-hero{
+  display:grid;grid-template-columns:0.9fr 1.1fr;
+  border-radius:20px;overflow:hidden;margin-bottom:22px;
+  box-shadow:0 12px 48px rgba(124,58,237,0.15);
+  animation:fadeUp 0.8s 0.2s cubic-bezier(.23,1,.32,1) both;
+}
+.score-left{
+  padding:48px 36px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#7c3aed,#ec4899,#f59e0b);
+  position:relative;overflow:hidden;
+}
+.score-left::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 30% 70%,rgba(255,255,255,0.12),transparent 60%);
+}
+.score-number{
+  font-family:'Outfit',sans-serif;font-weight:900;font-size:90px;line-height:1;
+  letter-spacing:-4px;color:#fff;position:relative;z-index:1;
+  text-shadow:0 4px 20px rgba(0,0,0,0.2);
+}
+.score-slash{font-size:26px;font-weight:300;opacity:0.7}
+.grade-tag{
+  font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:2px;
+  padding:5px 16px;border-radius:100px;margin-top:12px;text-transform:uppercase;
+  background:rgba(255,255,255,0.25);color:#fff;border:1px solid rgba(255,255,255,0.4);
+  position:relative;z-index:1;backdrop-filter:blur(10px);
+}
+.score-right{
+  padding:36px;display:flex;flex-direction:column;justify-content:center;gap:22px;
+  background:rgba(255,255,255,0.9);backdrop-filter:blur(20px);
+}
+.score-tech-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text3);font-weight:700}
+.score-tech-val{font-family:'Outfit',sans-serif;font-size:24px;font-weight:800;color:var(--p1);margin-top:4px;letter-spacing:-0.5px}
+.divider{height:1px;background:linear-gradient(90deg,rgba(124,58,237,0.15),transparent)}
+.score-summary{font-size:14px;color:var(--text2);line-height:1.7}
+
+/* Dims grid */
+.dims-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:22px}
+.dim-card{
+  background:rgba(255,255,255,0.85);backdrop-filter:blur(16px);
+  border:1.5px solid transparent;border-radius:16px;padding:22px;
+  transition:all 0.3s cubic-bezier(.4,0,.2,1);
+  animation:fadeUp 0.7s ease both;
+  box-shadow:0 4px 20px rgba(0,0,0,0.06);
+  position:relative;overflow:hidden;
+}
+.dim-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  border-radius:16px 16px 0 0;
+}
+.dim-card:nth-child(1){border-color:rgba(124,58,237,0.2)}.dim-card:nth-child(1)::before{background:linear-gradient(90deg,#7c3aed,#a855f7)}
+.dim-card:nth-child(2){border-color:rgba(14,165,233,0.2)}.dim-card:nth-child(2)::before{background:linear-gradient(90deg,#0ea5e9,#38bdf8)}
+.dim-card:nth-child(3){border-color:rgba(16,185,129,0.2)}.dim-card:nth-child(3)::before{background:linear-gradient(90deg,#10b981,#34d399)}
+.dim-card:nth-child(4){border-color:rgba(236,72,153,0.2)}.dim-card:nth-child(4)::before{background:linear-gradient(90deg,#ec4899,#f472b6)}
+.dim-card:nth-child(5){border-color:rgba(245,158,11,0.2)}.dim-card:nth-child(5)::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.dim-card:nth-child(6){border-color:rgba(239,68,68,0.2)}.dim-card:nth-child(6)::before{background:linear-gradient(90deg,#ef4444,#f87171)}
+.dim-card:hover{transform:translateY(-6px);box-shadow:0 16px 48px rgba(124,58,237,0.15)}
+.dim-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.dim-name{font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;color:var(--text1)}
+.dim-score{font-family:'Space Mono',monospace;font-size:13px;font-weight:700}
+.bar-bg{height:7px;background:rgba(0,0,0,0.06);border-radius:100px;overflow:hidden;margin-bottom:12px}
+.bar-fill{height:100%;border-radius:100px;width:0%;transition:width 1.4s cubic-bezier(.4,0,.2,1)}
+.dim-note{font-size:12px;color:var(--text2);line-height:1.6;font-family:'Space Mono',monospace}
+
+/* Two col */
+.two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:22px}
+.panel{
+  background:rgba(255,255,255,0.85);backdrop-filter:blur(16px);
+  border:1.5px solid rgba(124,58,237,0.12);border-radius:16px;padding:26px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.05);
+  animation:fadeUp 0.7s ease both;transition:all 0.3s ease;
+}
+.panel:hover{box-shadow:0 12px 40px rgba(124,58,237,0.12);border-color:rgba(124,58,237,0.25)}
+.panel-title{
+  font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+  margin-bottom:18px;display:flex;align-items:center;gap:10px;color:var(--text3);
+}
+.panel-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(124,58,237,0.2),transparent)}
+
+/* Tags */
+.tech-tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+.t-tag{
+  font-family:'Space Mono',monospace;font-size:10px;padding:5px 11px;border-radius:8px;
+  border:1px solid;font-weight:700;transition:all 0.2s ease;cursor:default;
+}
+.t-tag.detected{color:#065f46;border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.1)}
+.t-tag.missing{color:#9f1239;border-color:rgba(236,72,153,0.4);background:rgba(236,72,153,0.1)}
+.t-tag:hover{transform:translateY(-2px)}
+.tech-explain{font-size:13px;color:var(--text2);line-height:1.7}
+
+/* Issues */
+.issue-row{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.05);transition:all 0.2s ease}
+.issue-row:first-child{padding-top:0}
+.issue-row:last-child{border-bottom:none;padding-bottom:0}
+.issue-row:hover{background:rgba(124,58,237,0.03);padding-left:8px;padding-right:8px;margin:0 -8px;border-radius:8px}
+.issue-badge{
+  font-family:'Space Mono',monospace;font-size:8px;padding:4px 10px;border-radius:6px;
+  border:1px solid;flex-shrink:0;height:fit-content;letter-spacing:1.2px;margin-top:2px;font-weight:700;text-transform:uppercase;
+}
+.issue-badge.bad{color:#9f1239;border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.08)}
+.issue-badge.warn{color:#92400e;border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.1)}
+.issue-badge.good{color:#065f46;border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.1)}
+.issue-title{font-weight:700;font-size:13px;color:var(--text1);margin-bottom:3px}
+.issue-desc{font-size:12px;color:var(--text2);line-height:1.6}
+
+/* Compare */
+.compare-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:22px}
+.compare-panel{
+  background:rgba(255,255,255,0.85);backdrop-filter:blur(16px);
+  border:1.5px solid rgba(124,58,237,0.15);border-radius:16px;overflow:hidden;
+  animation:fadeUp 0.7s ease both;box-shadow:0 4px 20px rgba(0,0,0,0.06);
+  transition:all 0.3s ease;display:flex;flex-direction:column;
+}
+.compare-panel:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(124,58,237,0.15)}
+.compare-panel.opt{border-color:rgba(16,185,129,0.25)}
+.cp-header{
+  display:flex;align-items:center;gap:9px;padding:13px 18px;
+  border-bottom:1px solid rgba(0,0,0,0.06);
+}
+.cp-orig-header{background:linear-gradient(90deg,rgba(239,68,68,0.08),transparent)}
+.cp-opt-header{background:linear-gradient(90deg,rgba(16,185,129,0.1),transparent)}
+.cp-dot{width:9px;height:9px;border-radius:50%}
+.cp-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;color:var(--text2)}
+.cp-body{
+  padding:18px;font-family:'Space Mono',monospace;font-size:12px;line-height:1.8;
+  color:var(--text2);white-space:pre-wrap;word-break:break-word;flex:1;overflow-y:auto;max-height:280px;
+}
+
+.footer{
+  text-align:center;margin-top:56px;padding-top:28px;border-top:1px solid rgba(124,58,237,0.1);
+  font-family:'Space Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;
+}
+.footer span{
+  background:linear-gradient(90deg,#7c3aed,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  font-weight:700;
+}
+
+@media(max-width:768px){
+  .wrapper{padding:36px 16px 80px}
+  .score-hero{grid-template-columns:1fr}
+  .score-left{border-bottom:none;padding:36px 24px}
+  .score-number{font-size:72px}
+  .dims-grid,.two-col,.compare-grid{grid-template-columns:1fr}
+  .card-footer{flex-direction:column;align-items:flex-start}
+  .right-controls{width:100%;flex-direction:column-reverse}
+  .analyze-btn{width:100%;justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-anim"></div>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
+
+<!-- Particles -->
+<div class="particles" id="particles"></div>
+
+<div class="wrapper">
+
+<header>
+  <div class="badge-row">
+    <div class="badge">✦ PromptLens v1.0</div>
+  </div>
+  <h1>PromptLens</h1>
+  <p class="tagline">analyze · score · optimize your AI prompts</p>
+</header>
+
+<div class="input-card">
+  <div class="card-header">
+    <div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div>
+    <span class="card-label">prompt_input.txt</span>
+  </div>
+  <textarea id="promptInput" placeholder=">_ type or paste your prompt here..." maxlength="3000"></textarea>
+  <div class="card-footer">
+    <div class="examples-row">
+      <span class="ex-pill" onclick="setEx('Tell me about AI.')">Tell me about AI.</span>
+      <span class="ex-pill" onclick="setEx('Summarize this')">Summarize this</span>
+      <span class="ex-pill" onclick="setEx('You are a senior Python engineer. Explain list comprehensions with 3 real-world examples and show edge cases to avoid. Format as markdown.')">Expert Python</span>
+      <span class="ex-pill" onclick="setEx('Write a story')">Write a story</span>
+    </div>
+    <div class="right-controls">
+      <span class="char-count" id="charCount">0 / 3000</span>
+      <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
+        <div class="spinner" id="spinner"></div>
+        <span id="btnText">Run Analysis →</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="error-box" id="errorBox"></div>
+
+<div id="results">
+  <div class="score-hero">
+    <div class="score-left">
+      <div class="score-number" id="scoreNum">--<span class="score-slash">/100</span></div>
+      <div class="grade-tag" id="scoreGrade">—</div>
+    </div>
+    <div class="score-right">
+      <div>
+        <div class="score-tech-label">Detected Technique</div>
+        <div class="score-tech-val" id="scoreTech">—</div>
+      </div>
+      <div class="divider"></div>
+      <div class="score-summary" id="scoreSummary"></div>
+    </div>
+  </div>
+
+  <div class="dims-grid" id="dimsGrid"></div>
+
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-title">Techniques</div>
+      <div class="tech-tags" id="techTags"></div>
+      <div class="tech-explain" id="techExplain"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Issues & Strengths</div>
+      <div id="issuesList"></div>
+    </div>
+  </div>
+
+  <div class="compare-grid">
+    <div class="compare-panel">
+      <div class="cp-header cp-orig-header">
+        <div class="cp-dot" style="background:#ef4444;box-shadow:0 0 8px #ef444480"></div>
+        <div class="cp-label">Original Prompt</div>
+      </div>
+      <div class="cp-body" id="originalText"></div>
+    </div>
+    <div class="compare-panel opt">
+      <div class="cp-header cp-opt-header">
+        <div class="cp-dot" style="background:#10b981;box-shadow:0 0 8px #10b98180"></div>
+        <div class="cp-label">✦ Optimized Version</div>
+      </div>
+      <div class="cp-body" id="optimizedText"></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Built with <span>Python · Flask · Gemini API</span> · Generative AI Project</div>
+</div>
+
+<script>
+// Particles
+(function(){
+  const colors=['#a855f7','#38bdf8','#34d399','#f472b6','#fbbf24','#f87171'];
+  const c=document.getElementById('particles');
+  for(let i=0;i<25;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    const size=Math.random()*8+4;
+    const col=colors[Math.floor(Math.random()*colors.length)];
+    const dur=Math.random()*15+10;
+    const delay=Math.random()*15;
+    p.style.cssText=`
+      width:${size}px;height:${size}px;
+      background:${col};opacity:0.6;
+      left:${Math.random()*100}%;
+      animation-duration:${dur}s;
+      animation-delay:${delay}s;
+    `;
+    c.appendChild(p);
+  }
+})();
+
+// Input counter
+const textarea=document.getElementById('promptInput');
+textarea.addEventListener('input',()=>{
+  const n=textarea.value.length;
+  const el=document.getElementById('charCount');
+  el.textContent=`${n} / 3000`;
+  el.style.color=n>2700?'#ef4444':n>2000?'#f59e0b':'';
+});
+
+function setEx(t){
+  textarea.value=t;
+  document.getElementById('charCount').textContent=`${t.length} / 3000`;
+  textarea.focus();textarea.dispatchEvent(new Event('input'));
+}
+
+function scoreColor(s){
+  if(s>=80) return '#10b981';
+  if(s>=60) return '#7c3aed';
+  if(s>=40) return '#f59e0b';
+  return '#ef4444';
+}
+function barGradient(s){
+  if(s>=80) return 'linear-gradient(90deg,#10b981,#34d399)';
+  if(s>=60) return 'linear-gradient(90deg,#7c3aed,#a855f7)';
+  if(s>=40) return 'linear-gradient(90deg,#f59e0b,#fbbf24)';
+  return 'linear-gradient(90deg,#ef4444,#f87171)';
+}
+function gradeLabel(s){
+  if(s>=85) return '✦ Excellent';
+  if(s>=70) return '✓ Good';
+  if(s>=50) return '— Average';
+  return '✗ Weak';
+}
+
+function animCount(el,target,dur=1200){
+  const start=Date.now();
+  (function u(){
+    const p=Math.min((Date.now()-start)/dur,1);
+    const e=1-Math.pow(1-p,3);
+    el.textContent=Math.round(e*target);
+    if(p<1) requestAnimationFrame(u);
+    else el.textContent=target;
+  })();
+}
+
+async function analyze(){
+  const prompt=textarea.value.trim();
+  if(!prompt){showErr('Please enter a prompt first.');return;}
+  setLoading(true);hideErr();
+  document.getElementById('results').style.display='none';
+  try{
+    const res=await fetch('/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+    const data=await res.json();
+    if(data.error){showErr(data.error);return;}
+    render(data,prompt);
+  }catch(e){showErr('Connection error: '+e.message);}
+  finally{setLoading(false);}
+}
+
+function render(r,original){
+  const results=document.getElementById('results');
+  results.style.display='block';
+
+  const col=scoreColor(r.overallScore);
+  const numEl=document.getElementById('scoreNum');
+  numEl.innerHTML='<span id="sv">0</span><span class="score-slash">/100</span>';
+  animCount(document.getElementById('sv'),r.overallScore);
+
+  const grade=document.getElementById('scoreGrade');
+  grade.textContent=gradeLabel(r.overallScore);
+  document.getElementById('scoreTech').textContent=r.detectedTechnique||'—';
+  document.getElementById('scoreSummary').textContent=r.techniqueExplanation||'';
+
+  const grid=document.getElementById('dimsGrid');
+  grid.innerHTML='';
+  (r.dimensions||[]).forEach((d,i)=>{
+    const c=scoreColor(d.score);
+    const card=document.createElement('div');
+    card.className='dim-card';
+    card.style.animationDelay=`${i*0.08}s`;
+    card.innerHTML=`
+      <div class="dim-header">
+        <div class="dim-name">${d.name}</div>
+        <div class="dim-score" style="color:${c}">${d.score}<span style="color:#a89cc0;font-size:10px;margin-left:2px">/100</span></div>
+      </div>
+      <div class="bar-bg">
+        <div class="bar-fill" style="background:${barGradient(d.score)}" data-w="${d.score}"></div>
+      </div>
+      <div class="dim-note">${d.note}</div>`;
+    grid.appendChild(card);
+  });
+  setTimeout(()=>{
+    document.querySelectorAll('.bar-fill').forEach(b=>{b.style.width=b.dataset.w+'%'});
+  },100);
+
+  const tags=document.getElementById('techTags');
+  tags.innerHTML='';
+  (r.techniquesDetected||[]).forEach(t=>{
+    const el=document.createElement('span');
+    el.className='t-tag detected';
+    el.textContent='✓ '+t;
+    tags.appendChild(el);
+  });
+  (r.techniquesMissing||[]).forEach(t=>{
+    const el=document.createElement('span');
+    el.className='t-tag missing';
+    el.textContent='✗ '+t;
+    tags.appendChild(el);
+  });
+  document.getElementById('techExplain').textContent=r.techniqueExplanation||'';
+
+  const list=document.getElementById('issuesList');
+  list.innerHTML='';
+  const labels={bad:'Issue',warn:'Warn',good:'Pass'};
+  (r.issues||[]).forEach(issue=>{
+    const row=document.createElement('div');
+    row.className='issue-row';
+    row.innerHTML=`
+      <div class="issue-badge ${issue.type}">${labels[issue.type]||'—'}</div>
+      <div>
+        <div class="issue-title">${issue.title}</div>
+        <div class="issue-desc">${issue.desc}</div>
+      </div>`;
+    list.appendChild(row);
+  });
+
+  document.getElementById('originalText').textContent=original;
+  document.getElementById('optimizedText').textContent=r.optimizedPrompt||'';
+  results.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function setLoading(on){
+  document.getElementById('analyzeBtn').disabled=on;
+  document.getElementById('spinner').style.display=on?'block':'none';
+  document.getElementById('btnText').textContent=on?'Analyzing...':'Run Analysis →';
+}
+function showErr(msg){
+  const el=document.getElementById('errorBox');
+  el.textContent='× '+msg;el.style.display='block';
+}
+function hideErr(){document.getElementById('errorBox').style.display='none';}
+</script>
+</body>
+</html>
